@@ -59,15 +59,6 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
-      # Next.jsビルドキャッシュ
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-
       # Supabase起動待ちとPlaywrightインストールを並列実行
       - name: Wait for Supabase and install Playwright
         run: |
