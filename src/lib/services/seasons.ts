@@ -1,10 +1,13 @@
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import type { Database } from "@/lib/types/supabase";
+import { shouldSkipFetch } from "@/lib/utils/build-check";
 
 type Season = Database["public"]["Tables"]["seasons"]["Row"];
 export type { Season };
 
 export async function getCurrentSeason(): Promise<Season | null> {
+  if (shouldSkipFetch()) return null;
+
   const supabase = await createAdminClient();
 
   const { data, error } = await supabase
@@ -22,6 +25,8 @@ export async function getCurrentSeason(): Promise<Season | null> {
 }
 
 export async function getAllSeasons(): Promise<Season[]> {
+  if (shouldSkipFetch()) return [];
+
   const supabase = await createAdminClient();
 
   const { data, error } = await supabase
@@ -39,6 +44,8 @@ export async function getAllSeasons(): Promise<Season[]> {
 }
 
 export async function getInactiveSeasons(): Promise<Season[]> {
+  if (shouldSkipFetch()) return [];
+
   const supabase = await createAdminClient();
 
   const { data, error } = await supabase
@@ -56,6 +63,8 @@ export async function getInactiveSeasons(): Promise<Season[]> {
 }
 
 export async function getSeasonBySlug(slug: string): Promise<Season | null> {
+  if (shouldSkipFetch()) return null;
+
   const supabase = await createAdminClient();
 
   const { data, error } = await supabase
@@ -90,6 +99,8 @@ export async function getUserSeasonHistory(userId: string): Promise<
     } | null;
   }>
 > {
+  if (shouldSkipFetch()) return [];
+
   const supabase = await createAdminClient();
 
   // 全シーズンを取得（アクティブなシーズンを最初に、その後は開始日の降順）

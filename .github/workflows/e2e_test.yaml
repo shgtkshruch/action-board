@@ -75,7 +75,7 @@ jobs:
           PLAYWRIGHT_PID=$!
 
           # Next.jsビルドをバックグラウンドで実行
-          pnpm run build &
+          pnpm run build:ci &
           BUILD_PID=$!
 
           # 全て完了を待つ

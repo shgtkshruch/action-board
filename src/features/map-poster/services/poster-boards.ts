@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/types/supabase";
+import { shouldSkipFetch } from "@/lib/utils/build-check";
 import { getPosterBoardStatsAction } from "../actions/poster-boards";
 import type {
   BoardStatus,
@@ -451,6 +452,8 @@ export async function getPosterBoardStats(prefecture: string): Promise<{
 
 // 選挙管理委員会から提供された掲示板総数を取得
 export async function getPosterBoardTotals(): Promise<PosterBoardTotal[]> {
+  if (shouldSkipFetch()) return [];
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -544,6 +547,8 @@ export async function getPosterBoardTotalByPrefecture(
 export async function getPosterBoardSummaryByDistrict(): Promise<
   Record<string, { total: number; statuses: Record<BoardStatus, number> }>
 > {
+  if (shouldSkipFetch()) return {};
+
   const supabase = createClient();
 
   // 区割りでグループ化して集計

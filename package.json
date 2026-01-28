@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:ci": "NEXT_DISABLE_FETCH_DURING_BUILD=true next build",
     "start": "next start",
     "types": "npx supabase gen types typescript --local > src/lib/types/supabase.ts && biome check --write src/lib/types/supabase.ts",
     "db:migrate": "npx supabase migration up --local && pnpm run types",
