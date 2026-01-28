@@ -60,14 +60,6 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
-      - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Install Playwright dependencies (cached)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
-
       # Next.jsビルドキャッシュ
       - name: Cache Next.js build
         uses: actions/cache@v4
@@ -77,8 +69,16 @@ jobs:
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
-      - name: Build
-        run: pnpm run build
+      # PlaywrightインストールとNext.jsビルドを並列実行
+      - name: Build and install Playwright in parallel
+        run: |
+          pnpm run build &
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            pnpm exec playwright install-deps chromium
+          else
+            pnpm exec playwright install --with-deps chromium
+          fi
+          wait
 
       # Supabaseの起動を待機
       - name: Wait for Supabase
