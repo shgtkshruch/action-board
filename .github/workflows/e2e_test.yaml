@@ -36,9 +36,8 @@ jobs:
         with:
           version: latest
 
-      # Supabaseをバックグラウンドで起動（依存関係インストールと並列）
-      - name: Start Supabase (background)
-        run: supabase start -x studio,postgres-meta,imgproxy &
+      - name: Start Supabase
+        run: supabase start -x studio,postgres-meta,imgproxy
         env:
           SMTP_ENABLED: false
           DOCKER_BUILDKIT: 1
@@ -79,13 +78,6 @@ jobs:
             pnpm exec playwright install --with-deps chromium
           fi
           wait
-
-      # Supabaseの起動を待機
-      - name: Wait for Supabase
-        run: |
-          echo "Waiting for Supabase to be ready..."
-          timeout 30 bash -c 'until curl -s http://localhost:54321/rest/v1/ > /dev/null; do sleep 1; done'
-          echo "Supabase is ready!"
 
       # Supabaseのデータベースをリセット
       - name: Reset Supabase database
