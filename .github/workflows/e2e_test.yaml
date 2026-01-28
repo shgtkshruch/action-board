@@ -37,7 +37,7 @@ jobs:
           version: latest
 
       - name: Start Supabase (background)
-        run: supabase start -x studio,postgres-meta,imgproxy &
+        run: supabase start -x studio,realtime,imgproxy,edge-runtime,logflare,mailpit,postgres-meta,storage-api,supavisor,vector &
         env:
           SMTP_ENABLED: false
           DOCKER_BUILDKIT: 1
