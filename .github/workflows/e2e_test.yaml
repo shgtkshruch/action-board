@@ -36,8 +36,8 @@ jobs:
         with:
           version: latest
 
-      - name: Start Supabase
-        run: supabase start -x studio,postgres-meta,imgproxy
+      - name: Start Supabase (background)
+        run: supabase start -x studio,postgres-meta,imgproxy &
         env:
           SMTP_ENABLED: false
           DOCKER_BUILDKIT: 1
@@ -68,15 +68,18 @@ jobs:
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
-      # PlaywrightインストールとNext.jsビルドを並列実行
-      - name: Build and install Playwright in parallel
+      # Playwright、ビルド、Supabase起動待ちを並列実行
+      - name: Build, install Playwright, and wait for Supabase
         run: |
           pnpm run build &
           if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-            pnpm exec playwright install-deps chromium
+            pnpm exec playwright install-deps chromium &
           else
-            pnpm exec playwright install --with-deps chromium
+            pnpm exec playwright install --with-deps chromium &
           fi
+          echo "Waiting for Supabase..."
+          timeout 180 bash -c 'until curl -s http://localhost:54321/rest/v1/ > /dev/null 2>&1; do sleep 2; done'
+          echo "Supabase is ready!"
           wait
 
       # ポスターデータをロード
