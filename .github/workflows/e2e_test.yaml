@@ -79,13 +79,6 @@ jobs:
           fi
           wait
 
-      # Supabaseのデータベースをリセット
-      - name: Reset Supabase database
-        run: supabase db reset
-        env:
-          SMTP_ENABLED: false
-          BQ_USER_PASSWORD: bq_user_password
-
       # ポスターデータをロード
       - name: Load poster CSV data
         run: pnpm run poster:load-csv
