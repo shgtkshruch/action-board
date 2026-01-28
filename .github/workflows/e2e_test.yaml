@@ -68,22 +68,23 @@ jobs:
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
-      - name: Wait for Supabase
+      # Supabase起動待ちとPlaywrightインストールを並列実行
+      - name: Wait for Supabase and install Playwright
         run: |
-          echo "Waiting for Supabase..."
-          timeout 180 bash -c 'until curl -s http://localhost:54321/rest/v1/ > /dev/null 2>&1; do sleep 2; done'
-          echo "Supabase is ready!"
+          # Supabase起動待ちをバックグラウンドで実行
+          (timeout 180 bash -c 'until curl -s http://localhost:54321/rest/v1/ > /dev/null 2>&1; do sleep 2; done' && echo "Supabase is ready!") &
 
-      # PlaywrightインストールとNext.jsビルドを並列実行
-      - name: Build and install Playwright
-        run: |
-          pnpm run build &
+          # Playwrightインストール
           if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
             pnpm exec playwright install-deps chromium
           else
             pnpm exec playwright install --with-deps chromium
           fi
+
           wait
+
+      - name: Build Next.js
+        run: pnpm run build
 
       # ポスターデータをロード
       - name: Load poster CSV data
