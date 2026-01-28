@@ -28,7 +28,6 @@ jobs:
           echo "SUPABASE_SERVICE_ROLE_KEY=sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz" >> $GITHUB_ENV
           echo "DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres" >> $GITHUB_ENV
           echo "ENABLE_CONFIRMATIONS=false" >> $GITHUB_ENV
-          cat $GITHUB_ENV
 
       # Supabase CLIのセットアップと起動
       - name: Setup Supabase CLI
@@ -36,10 +35,9 @@ jobs:
         with:
           version: latest
 
-      - name: Start Supabase
-        run: |
-          echo "Starting Supabase..."
-          supabase start -x studio,postgres-meta,imgproxy
+      # Supabaseをバックグラウンドで起動（依存関係インストールと並列）
+      - name: Start Supabase (background)
+        run: supabase start -x studio,postgres-meta,imgproxy &
         env:
           SMTP_ENABLED: false
           DOCKER_BUILDKIT: 1
@@ -48,6 +46,26 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Playwrightブラウザのキャッシュ
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm list @playwright/test --json | jq -r '.[0].devDependencies["@playwright/test"].version')" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright dependencies (cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
 
       - name: Build
         run: pnpm run build
@@ -61,23 +79,14 @@ jobs:
 
       # Supabaseのデータベースをリセット
       - name: Reset Supabase database
-        run: |
-          echo "Resetting Supabase database..."
-          supabase db reset
-          echo "Supabase database reset completed."
+        run: supabase db reset
         env:
           SMTP_ENABLED: false
           BQ_USER_PASSWORD: bq_user_password
 
       # ポスターデータをロード
       - name: Load poster CSV data
-        run: |
-          echo "Loading poster CSV data..."
-          pnpm run poster:load-csv
-          echo "Poster CSV data loaded."
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium webkit
+        run: pnpm run poster:load-csv
 
       - name: Run CI Tests
         run: pnpm run test:ci:e2e
