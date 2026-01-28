@@ -59,23 +59,27 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
-      # Supabase起動待ちとPlaywrightインストールを並列実行
-      - name: Wait for Supabase and install Playwright
+      # Supabase起動待ち、Playwrightインストール、Buildを並列実行
+      - name: Wait for Supabase, install Playwright, and build
         run: |
           # Supabase起動待ちをバックグラウンドで実行
           (timeout 180 bash -c 'until curl -s http://localhost:54321/rest/v1/ > /dev/null 2>&1; do sleep 2; done' && echo "Supabase is ready!") &
+          SUPABASE_PID=$!
 
-          # Playwrightインストール
+          # Playwrightインストールをバックグラウンドで実行
           if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-            pnpm exec playwright install-deps chromium
+            pnpm exec playwright install-deps chromium &
           else
-            pnpm exec playwright install --with-deps chromium
+            pnpm exec playwright install --with-deps chromium &
           fi
+          PLAYWRIGHT_PID=$!
 
-          wait
+          # Next.jsビルドをバックグラウンドで実行
+          pnpm run build &
+          BUILD_PID=$!
 
-      - name: Build Next.js
-        run: pnpm run build
+          # 全て完了を待つ
+          wait $SUPABASE_PID $PLAYWRIGHT_PID $BUILD_PID
 
       # ポスターデータをロード
       - name: Load poster CSV data
