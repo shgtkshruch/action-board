@@ -61,14 +61,6 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Wait for Supabase
-        run: |
-          timeout 180 bash -c '
-            until curl -sf http://localhost:54321/rest/v1/; do
-              sleep 2
-            done
-          '
-
       - name: Build Next.js
         run: pnpm run build
 
