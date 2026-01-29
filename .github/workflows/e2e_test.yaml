@@ -1,7 +1,6 @@
 name: Build & Test E2E/RLS
 on:
   pull_request:
-  workflow_dispatch:
 
 jobs:
   test:
@@ -36,11 +35,8 @@ jobs:
           version: latest
 
       - name: Start Supabase
-        run: supabase start -x studio,postgres-meta,imgproxy,mailpit,logflare,vector,storage-api
+        run: supabase start -x studio,postgres-meta,imgproxy,mailpit,logflare,vector
         env:
-          SMTP_ENABLED: false
-          DOCKER_BUILDKIT: 1
-          COMPOSE_DOCKER_CLI_BUILD: 1
           BQ_USER_PASSWORD: bq_user_password
 
       - name: Install dependencies
