@@ -59,8 +59,8 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
-      # Supabase起動待ち、Playwrightインストール、Buildを並列実行
-      - name: Wait for Supabase, install Playwright, and build
+      # Supabase起動待ちとPlaywrightインストールを並列実行
+      - name: Wait for Supabase and install Playwright
         run: |
           # Supabase起動待ちをバックグラウンドで実行
           (timeout 180 bash -c 'until curl -s http://localhost:54321/rest/v1/ > /dev/null 2>&1; do sleep 2; done' && echo "Supabase is ready!") &
@@ -74,12 +74,12 @@ jobs:
           fi
           PLAYWRIGHT_PID=$!
 
-          # Next.jsビルドをバックグラウンドで実行
-          pnpm run build:ci &
-          BUILD_PID=$!
-
           # 全て完了を待つ
-          wait $SUPABASE_PID $PLAYWRIGHT_PID $BUILD_PID
+          wait $SUPABASE_PID $PLAYWRIGHT_PID
+
+      # Supabase起動後にNext.jsビルド
+      - name: Build Next.js
+        run: pnpm run build
 
       # ポスターデータをロード
       - name: Load poster CSV data

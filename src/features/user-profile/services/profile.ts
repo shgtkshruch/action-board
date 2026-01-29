@@ -4,11 +4,8 @@ import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/types/supabase";
-import { shouldSkipFetch } from "@/lib/utils/build-check";
 
 export const getUser = cache(async () => {
-  if (shouldSkipFetch()) return null;
-
   const supabase = createClient();
 
   const {
