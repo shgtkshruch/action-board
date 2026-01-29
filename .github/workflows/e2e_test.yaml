@@ -57,6 +57,10 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
+      - name: Install Playwright (if not cached)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Wait for Supabase
         run: |
           timeout 180 bash -c '
@@ -64,10 +68,6 @@ jobs:
               sleep 2
             done
           '
-
-      - name: Install Playwright (if not cached)
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
 
       - name: Build Next.js
         run: pnpm run build
