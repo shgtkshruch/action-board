@@ -30,7 +30,6 @@ jobs:
           echo "DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres" >> $GITHUB_ENV
           echo "ENABLE_CONFIRMATIONS=false" >> $GITHUB_ENV
 
-      # Supabase CLIのセットアップと起動
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
@@ -47,7 +46,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Playwrightブラウザのキャッシュ
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(pnpm list @playwright/test --json | jq -r '.[0].devDependencies["@playwright/test"].version')" >> $GITHUB_OUTPUT
@@ -59,27 +57,21 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
-      # Supabase起動待ちとPlaywrightインストールを並列実行
-      - name: Wait for Supabase and install Playwright
+      - name: Wait for Supabase
         run: |
-          # Supabase起動待ちをバックグラウンドで実行
-          (timeout 180 bash -c 'until curl -s http://localhost:54321/rest/v1/ > /dev/null 2>&1; do sleep 2; done' && echo "Supabase is ready!") &
-          SUPABASE_PID=$!
+          timeout 180 bash -c '
+            until curl -sf http://localhost:54321/rest/v1/; do
+              sleep 2
+            done
+          '
 
-          # Playwrightインストールをバックグラウンドで実行
-          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != "true" ]; then
-            pnpm exec playwright install --with-deps chromium &
-          fi
-          PLAYWRIGHT_PID=$!
+      - name: Install Playwright (if not cached)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
 
-          # 全て完了を待つ
-          wait $SUPABASE_PID $PLAYWRIGHT_PID
-
-      # Supabase起動後にNext.jsビルド
       - name: Build Next.js
         run: pnpm run build
 
-      # ポスターデータをロード
       - name: Load poster CSV data
         run: pnpm run poster:load-csv
 
