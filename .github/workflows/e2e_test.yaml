@@ -67,9 +67,7 @@ jobs:
           SUPABASE_PID=$!
 
           # Playwrightインストールをバックグラウンドで実行
-          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-            pnpm exec playwright install-deps chromium &
-          else
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != "true" ]; then
             pnpm exec playwright install --with-deps chromium &
           fi
           PLAYWRIGHT_PID=$!
